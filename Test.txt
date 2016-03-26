@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+MAHALEAN SUGE COIUL
+=======
+>>>>>>> origin/master
 fdsfdsfdsfsw
 dofgiehgieaurhgea]erguheorgeargDFUGRE8
 
@@ -27,7 +33,11 @@ eirughiadughvaw
 ]edrghaeigw
 egeargoeagorghowUTHEQ]WET
 WE0GUA0EG9UEA
+<<<<<<< HEAD
 
 
 
 voi ati scris asta?
+=======
+>>>>>>> origin/master
+>>>>>>> origin/master
