@@ -1,0 +1,27 @@
+#include <VirtualWire.h>
+char pwmmsg[3];
+int transmit_pin = 2;
+int reglaj = A0;
+int pwm;
+void setup() 
+{
+  Serial.begin(9600);
+  vw_set_tx_pin(transmit_pin);
+  vw_set_ptt_inverted(true);
+  vw_setup(2000); 
+  
+}
+
+void loop() {
+  pwm = analogRead(reglaj);
+  float pwmflt = pwm;
+  pwmflt = pwmflt/4.0;
+  pwm = (int)pwmflt;
+  itoa(pwm,pwmmsg,10);
+  delay(1000);
+  digitalWrite(3, HIGH);
+  Serial.print(pwm);
+  vw_send((uint8_t *)pwmmsg, strlen(pwmmsg));
+  vw_wait_tx();
+  digitalWrite(3, LOW);
+}
