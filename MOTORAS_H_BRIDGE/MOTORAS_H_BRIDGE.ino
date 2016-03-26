@@ -1,8 +1,8 @@
-#include "IRremote.h"
+#include <IRremote.h>
 
-int RECV_PIN = 9;
 
-IRrecv irrecv(RECV_PIN);
+
+
 
 decode_results results;
 int inchidere=1;
@@ -11,45 +11,50 @@ void setup()
   
   pinMode(7,OUTPUT);
   Serial.begin(9600);
-  irrecv.enableIRIn(); // Start the receiver
+ pinMode(9,INPUT);
     digitalWrite(7,HIGH);
    Serial.print("ARDUINO HAS STARTED");
     pinMode(5,OUTPUT);
     pinMode(6,OUTPUT);
     analogWrite(6,0);
 }
-int incet=0;
-int speed=0;
-int citit()
-{
-  if ( irrecv.decode(&results)) 
- {
-   Serial.println(results.value, HEX);
-     irrecv.resume(); // Receive the next value
-     return 1;
- }
- return 0;
-}
+
+
 
    
 int acc=2;
-int vel;
+int vel=1;
+int citit=1;
 
 void loop() {
-inchidere=1;
+   Serial.println(citit);
+if(citit==1)
+  {
+    citit=digitalRead(9);
+   
+      if(citit==0)
+      {
+         acc=-acc;
+         vel=vel-1;
+      }
+    }
+ 
+ 
+
     if(inchidere==1)
       {
-        analogWrite(5,vel);
-        if (citit()==1)
+       
+      
+        if((vel>0)&&(vel<=100))
         {
-          vel=-vel;
-        }
-        if((vel>0)&&(vel<70))
           vel=vel+acc;
-        
+           analogWrite(5,vel);
+        }
+        Serial.println(acc);
        
          
       }
+ 
      
      
 
