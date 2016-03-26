@@ -30,38 +30,26 @@ int citit()
  }
  return 0;
 }
-void inchidere_fereastra()
-
-{
- 
- 
-  if(citit()==1)
-    incet=1;
-  
-   
- }
-  
- if(incet==1)
- {
-  analogWrite(5,20);
- }
- else
- {
-  analogWrite(5,40);
-
- }
- 
-  
-  
-}
 
    
-
+int acc=2;
+int vel;
 
 void loop() {
-
+inchidere=1;
     if(inchidere==1)
-      inchidere_fereastra();
+      {
+        analogWrite(5,vel);
+        if (citit()==1)
+        {
+          vel=-vel;
+        }
+        if((vel>0)&&(vel<70))
+          vel=vel+acc;
+        
+       
+         
+      }
      
      
 
