@@ -2,17 +2,20 @@
 
 
 
-
+//pinii necesari
+// 5 si 6 PWM pentru motor
+//9 pt citit senzoru
+//foloseste variabila {inchidere} pentru a declansa inchiderea trapei.El creste liniar viteza si scade cand sensoru recepteaza un stimul
 
 decode_results results;
 int inchidere=1;
 void setup()
 {
   
-  pinMode(7,OUTPUT);
+
   Serial.begin(9600);
  pinMode(9,INPUT);
-    digitalWrite(7,HIGH);
+    
    Serial.print("ARDUINO HAS STARTED");
     pinMode(5,OUTPUT);
     pinMode(6,OUTPUT);
