@@ -2,6 +2,7 @@
 #include "SPI.h"
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9340.h"
+#include "mario.h"
 
 #if defined(__SAM3X8E__)
     #undef __FlashStringHelper::F(string_literal)
@@ -19,15 +20,17 @@
 
 Adafruit_ILI9340 tft = Adafruit_ILI9340(_cs, _dc, _rst);
 
+int WindAll=-333;
 int valoare=-40;
 int shown=0;
 
-const int buzz=3;
+const int buzzer=3;
 char ID [4];
 int Humid, Temp, Wind, Rain;
 char HumidC [4], TempC [4], WindC [3], RainC;
 const int receive_pin = 2;
 long long prev_time=0, curr_time;
+int n=0,m=0,o=0;
 
 namespace locatie
 {
@@ -40,30 +43,35 @@ namespace locatie
   } loc;
 }
 
-locatie::loc gradina, sera;
+locatie::loc gradina, curte;
 
 void setup() 
 {
+  digitalWrite(4, LOW);
   vw_set_rx_pin(receive_pin);
   vw_set_ptt_inverted(true); // Required for DR3100
   vw_setup(2000);  // Bits per sec
   vw_rx_start();       // Start the receiver PLL running
   delay(100);
   pinMode(7, INPUT);
+  pinMode(3, OUTPUT);
   Serial.begin(57600);
   tft.begin();
+  tell_garden();
   delay(100);
 }
 
 void loop(void) 
 {
+  delay(1000);
+  alarma();
   ask_data();
   curr_time = millis();
   
   if (digitalRead(7) && shown==1) {shown=0; tell_garden();}
-  if (digitalRead(7) && shown==0) {shown=1; tell_sera();}
+  if (digitalRead(7) && shown==0) {shown=1; tell_curte();}
   if (((curr_time-prev_time)>10000) && shown == 0) { tell_garden(); prev_time = millis();}
-  if (((curr_time-prev_time)>10000) && shown == 1) { tell_sera(); prev_time = millis();}
+  if (((curr_time-prev_time)>10000) && shown == 1) { tell_curte(); prev_time = millis();}
 }
 
 void static_draw()
@@ -120,45 +128,45 @@ void tell_garden()
       tft.print("km/h");
     }
  tft.setCursor(5, 185);
- if (gradina.rain==1) {alerta_ploaie(); tone(buzz, 5000, 300);}
+ if (gradina.rain==1) {alerta_ploaie();inchidete(); sing();} else show_clock();
 }
 
 
-void tell_sera()
+void tell_curte()
 {
   tft.setRotation(0);
   static_draw();
   tft.setRotation(3);
   tft.setTextColor(ILI9340_WHITE);  tft.setTextSize(3);
   tft.setCursor(130, 10);
-  tft.print("Sera");
+  tft.print("Curte");
   tft.setCursor(10, 45);
   tft.print("Umiditate:");
   tft.setCursor(190,45);
-  tft.print(sera.humidity);
+  tft.print(curte.humidity);
   tft.setCursor(250,45);
   tft.print("%");
   tft.setCursor(10, 85);
   tft.print("Temperatura:");
   tft.setCursor(220,85);
-  tft.print(sera.temperature);
+  tft.print(curte.temperature);
   tft.setCursor(280,85);
   tft.setTextSize(2);
   tft.print("*");
   tft.setTextSize(3);
   tft.print("C");
   tft.setCursor(10, 125);
-  if (sera.wind == -333) {tft.print("No info about the"); tft.setCursor(10, 155); tft.print("wind.");}
+  if (curte.wind == -333) {tft.print("No info about the"); tft.setCursor(10, 155); tft.print("wind.");}
   else
   {
     tft.print("Vant:");
     tft.setCursor(100,125);
-    tft.print(sera.wind);
+    tft.print(curte.wind);
     tft.setCursor(160,125);
     tft.print("km/h");
   }
  tft.setCursor(5, 185);
- if (sera.rain==1) {alerta_ploaie(); tone(buzz, 5000, 300);}
+ if (curte.rain==1) {alerta_ploaie();inchidete(); sing();} else show_clock();
 }
 
 
@@ -220,22 +228,26 @@ void ask_data()
          else
           Rain = -333;
 
-        if(!strcmp(ID, "GRD")) 
+        if(strcmp(ID, "GRD") == 0) 
         { 
           gradina.humidity = Humid;
           gradina.temperature = Temp;
-          gradina.wind = Wind;
+          gradina.wind = WindAll;
           gradina.rain = Rain;
         
         }
 
-        if(!strcmp(ID, "SER")) 
+        if(strcmp(ID, "CUR") == 0) 
         { 
-          sera.humidity = Humid;
-          sera.temperature = Temp;
-          sera.wind = Wind;
-          sera.rain = Rain;
-        
+          curte.humidity = Humid;
+          curte.temperature = Temp;
+          curte.wind = WindAll;
+          curte.rain = Rain;
+        }
+
+        if (strcmp (ID, "BAL") == 0)
+        {
+          WindAll = Wind;
         }
 
         Serial.print ("ID: "); Serial.println (ID);
@@ -245,3 +257,162 @@ void ask_data()
         Serial.print ("Rain: "); Serial.println (Rain);
      }
 }
+
+
+void sing() 
+{
+
+ 
+    Serial.println(" 'Mario Theme'");
+    int size = sizeof(melody) / sizeof(int);
+    for (int thisNote = 0; thisNote < size; thisNote++) {
+ 
+      // to calculate the note duration, take one second
+      // divided by the note type.
+      //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+      int noteDuration = 1000 / tempo[thisNote];
+ 
+      buzz(3, melody[thisNote], noteDuration);
+ 
+      // to distinguish the notes, set a minimum time between them.
+      // the note's duration + 30% seems to work well:
+      int pauseBetweenNotes = noteDuration * 1.30;
+      delay(pauseBetweenNotes);
+ 
+      // stop the tone playing:
+      buzz(3, 0, noteDuration);
+ 
+    }
+}
+
+ 
+void buzz(int targetPin, long frequency, long length) {
+  
+  long delayValue = (long)(1000000.0 / frequency / 2.0); // calculate the delay value between transitions
+  //// 1 second's worth of microseconds, divided by the frequency, then split in half since
+  //// there are two phases to each cycle
+  long numCycles = (long)(frequency * length / 1000.0); // calculate the number of cycles for proper timing
+  //// multiply frequency, which is really cycles per second, by the number of seconds to
+  //// get the total number of cycles to produce
+  for (long i = 0; i < numCycles; i++) { // for the calculated length of time...
+    digitalWrite(targetPin, HIGH); // write the buzzer pin high to push out the diaphram
+    delayMicroseconds(delayValue); // wait for the calculated delay value
+    digitalWrite(targetPin, LOW); // write the buzzer pin low to pull back the diaphram
+    delayMicroseconds(delayValue); // wait again or the calculated delay value
+  }
+}
+
+
+void inchidete()
+
+{
+    int acc=1;
+    int vel=2;
+    int citit=1;
+    int inchidere=1;
+    while(inchidere==1)
+    {
+        citit=digitalRead(A0);
+        if(citit==0)
+            {
+               acc=-acc;
+               inchidere=0;
+            }
+              if(vel<200)
+            {
+                vel=vel+acc; if(acc<0) delay(20);
+               analogWrite(5,vel);
+            }
+      }
+      while(vel>=0)
+        {
+          vel=vel+acc;
+            analogWrite(5,vel);
+        }
+        analogWrite(5,0);
+}
+
+
+  //thhis is a list of int variables used in this clock program
+int s=0;
+int sec=0;
+int hrs=0;
+int minutes=0;
+int initialHours = 00;//variable to initiate hours
+int initialMins = 0;//variable to initiate minutes
+int initialSecs = 00;//variable to initiate seconds
+
+//this method is for seconds
+int seconds()
+{
+    s = initialHours*3600;
+    s = s+(initialMins*60);
+    s = s+initialSecs;
+    s = s+(millis()/1000);
+    return s;
+}
+//this method is for hours
+int hours()
+{
+    hrs = seconds();
+    hrs = hrs/3600;
+    hrs = hrs%24;
+    return hrs;
+}
+//this method is for minutes
+int mins()
+{
+    minutes = seconds();
+    minutes = minutes/60;
+    minutes = minutes%60;
+    return minutes;
+}
+
+int secs()
+{
+    sec = seconds();
+    sec = sec%60;
+    return sec;
+}
+
+//this loop will conintue to keep looping so that the time can go as follows
+
+void alarma(){
+  
+    int current=0;
+    if(Serial.available()>0)
+    {
+      current=Serial.read();
+      n=n*10+current-48;
+      current=Serial.read();
+      n=n*10+current-48; 
+      current=Serial.read();
+      m=m*10+current-48;
+      current=Serial.read();
+      m=m*10+current-48;  
+       current=Serial.read();
+      o=o*10+current-48;
+      current=Serial.read();
+      o=o*10+current-48;
+      
+            
+      }
+      if((n==hours())&&(m==mins())&&(o==secs()))
+      {
+              
+              sing();
+              n=0;m=0;o=0;
+              
+}}
+
+
+void show_clock()
+{
+  //hrs, minutes, sec
+  tft.print(hours());
+  tft.print(":");
+  tft.print(mins());
+  tft.print(":");
+  tft.print(secs());
+}
+
